@@ -1,19 +1,20 @@
 import User from "../models/User.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // validation
     if (!username || !email || !password) {
       return res.status(400).json({
         message: "All fields are required"
       });
     }
 
-    // check existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({
@@ -21,18 +22,25 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // create user
-    await User.create({
+    // ✅ SAVE USER IN VARIABLE
+    const user = await User.create({
       username,
       email,
       password: hashedPassword
     });
 
+    // ✅ CORRECT TOKEN
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
     return res.status(201).json({
-      message: "User registered successfully"
+      message: "User registered successfully",
+      token
     });
 
   } catch (error) {

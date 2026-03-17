@@ -1,5 +1,5 @@
 import express from 'express';
-import authRouter from './routes/auth.route';
+import authRouter from './routes/auth.route.js';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 
