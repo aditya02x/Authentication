@@ -51,4 +51,14 @@ const registerUser = async (req, res) => {
   }
 };
 
-export { registerUser };
+const getMe= async (req,res)=>{
+    const token = req.header.authorization?.split(" ")[1];
+
+    if(!token){
+        return res.status(401).json({message:"NO Token Provide "})
+    }
+    const decoded =jwt.verify(token,process.env.JWT_SECRET)
+
+}
+
+export { registerUser, getMe };

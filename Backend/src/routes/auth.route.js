@@ -8,4 +8,12 @@ const authRouter = Router();
  */
 authRouter.post("/register", registerUser);
 
+/**
+ * get /api/auth/get-me
+ * 
+
+ * 
+ */
+authRouter.get("/get-me",authControllers.getMe)
+
 export default authRouter;
