@@ -29,20 +29,33 @@ const registerUser = async (req, res) => {
     const user = await User.create({
       username,
       email,
-      
+
       password: hashedPassword
     });
 
     // ✅ CORRECT TOKEN
-    const token = jwt.sign(
+    const access_token = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+    const refresh_token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    res.cookie("refresh_token", refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+
 
     return res.status(201).json({
       message: "User registered successfully",
-      token
+      access_token,
     });
 
   } catch (error) {
@@ -86,4 +99,30 @@ const getMe = async (req, res) => {
   }
 }; 
 
-export { registerUser, getMe };
+const refreshToken = async (req, res) => {
+  const refresh_token = req.cookies.refresh_token;
+
+  if (!refresh_token) {
+    return res.status(401).json({
+      message: "No refresh token provided"
+    });
+  }
+
+  const decoded = jwt.verify(refresh_token, process.env.JWT_SECRET);
+
+  const user = await User.findById(decoded.id);
+
+  const new_access_token = jwt.sign(
+    { id: user._id },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found"
+    });
+  }
+
+}
+export { registerUser, getMe, refreshToken };
