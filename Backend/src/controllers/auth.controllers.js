@@ -1,5 +1,6 @@
 import User from "../models/User.model.js";
 import bcrypt from "bcrypt";
+;
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
@@ -28,6 +29,7 @@ const registerUser = async (req, res) => {
     const user = await User.create({
       username,
       email,
+      
       password: hashedPassword
     });
 
@@ -51,14 +53,37 @@ const registerUser = async (req, res) => {
   }
 };
 
-const getMe= async (req,res)=>{
-    const token = req.header.authorization?.split(" ")[1];
+const getMe = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
 
-    if(!token){
-        return res.status(401).json({message:"NO Token Provide "})
+    if (!token) {
+      return res.status(401).json({
+        message: "No token provided"
+      });
+      
     }
-    const decoded =jwt.verify(token,process.env.JWT_SECRET)
 
-}
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded token:", decoded);
+
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    return res.status(200).json({
+      user
+    });
+
+  } catch (error) {
+    return res.status(401).json({
+      message: "Invalid token"
+    });
+  }
+}; 
 
 export { registerUser, getMe };
